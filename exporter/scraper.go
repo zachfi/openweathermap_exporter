@@ -7,11 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type Forecast struct {
-	High float32
-	Low  float32
-}
-
 var (
 	currentTemp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_current_temperature",
@@ -28,24 +23,39 @@ var (
 		Help: "Temperature in Celcius",
 	}, []string{"inhours"})
 
-	moonRiseTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "owm_moonrise_time",
-		Help: "Time of Moon Rise",
-	}, nil)
-
-	moonSetTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "owm_moonrise_set",
-		Help: "Time of Moon Set",
-	}, nil)
-
 	sunRiseTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_sunrise_time",
 		Help: "Time of Sun Rise",
 	}, nil)
 
 	sunSetTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "owm_sunrise_set",
+		Name: "owm_sunset_time",
 		Help: "Time of Sun Set",
+	}, nil)
+
+	windSpeed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "owm_current_wind_speed",
+		Help: "The current speed of the wind",
+	}, nil)
+
+	windDegrees = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "owm_current_wind_degrees",
+		Help: "The current degreese of the wind",
+	}, nil)
+
+	rain = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "owm_current_rain",
+		Help: "The current rain",
+	}, nil)
+
+	snow = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "owm_current_snow",
+		Help: "The current snow",
+	}, nil)
+
+	clouds = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "owm_current_clouds",
+		Help: "The current clouds",
 	}, nil)
 )
 
@@ -54,10 +64,13 @@ func init() {
 		currentTemp,
 		forecastHighTemp,
 		forecastLowTemp,
-		moonRiseTime,
-		moonSetTime,
 		sunRiseTime,
 		sunSetTime,
+		windSpeed,
+		windDegrees,
+		rain,
+		snow,
+		clouds,
 	)
 }
 
@@ -170,6 +183,13 @@ func forecast(apiKey string) error {
 
 	sunRiseTime.With(prometheus.Labels{}).Set(float64(c.Sys.Sunrise))
 	sunSetTime.With(prometheus.Labels{}).Set(float64(c.Sys.Sunset))
+
+	windSpeed.With(prometheus.Labels{}).Set(float64(c.Wind.Speed))
+	windDegrees.With(prometheus.Labels{}).Set(float64(c.Wind.Deg))
+
+	snow.With(prometheus.Labels{}).Set(float64(c.Snow.ThreeH))
+	rain.With(prometheus.Labels{}).Set(float64(c.Rain.ThreeH))
+	clouds.With(prometheus.Labels{}).Set(float64(c.Clouds.All))
 
 	return nil
 }
