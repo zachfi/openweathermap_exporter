@@ -74,65 +74,6 @@ func init() {
 	)
 }
 
-// func forecastWatch(apiKey string) error {
-// 	log.Warnf("FUCK: %s", "FUCK")
-// 	c := gowu.NewClient(apiKey)
-// 	fore, err := c.GetForecast("portland", "or")
-// 	if err != nil {
-// 		log.Warnf("ERR: %s", "err")
-// 		return err
-// 	}
-//
-// 	log.Warnf("Result: %+v", fore)
-//
-// 	for i, day := range fore.Simpleforecast.Forecastday {
-// 		dayString := strconv.Itoa(i)
-//
-// 		highTemp, err := strconv.ParseFloat(day.High.Celsius, 32)
-// 		if err != nil {
-// 			log.Error(err)
-// 		}
-//
-// 		lowTemp, err := strconv.ParseFloat(day.Low.Celsius, 32)
-// 		if err != nil {
-// 			log.Error(err)
-// 		}
-//
-// 		forecastHighTemp.With(prometheus.Labels{"day": dayString}).Set(highTemp)
-// 		forecastLowTemp.With(prometheus.Labels{"day": dayString}).Set(lowTemp)
-// 	}
-//
-// 	return nil
-// }
-//
-// func astroWatch(apiKey string) error {
-// 	c := gowu.NewClient(apiKey)
-// 	moonPhase, sunPhase, err := c.GetAstronomy("portland", "or")
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	log.Debugf("Result: %+v", moonPhase)
-//
-// 	moonRiseHourMin, err := strconv.ParseFloat(
-// 		fmt.Sprintf("%s.%s", moonPhase.MoonRise.Hour, moonPhase.MoonRise.Minute), 32)
-// 	moonSetHourMin, err := strconv.ParseFloat(
-// 		fmt.Sprintf("%s.%s", moonPhase.MoonSet.Hour, moonPhase.MoonSet.Minute), 32)
-//
-// 	sunRiseHourMin, err := strconv.ParseFloat(
-// 		fmt.Sprintf("%s.%s", sunPhase.SunRise.Hour, sunPhase.SunRise.Minute), 32)
-// 	sunSetHourMin, err := strconv.ParseFloat(
-// 		fmt.Sprintf("%s.%s", sunPhase.SunSet.Hour, sunPhase.SunSet.Minute), 32)
-//
-// 	moonRiseTime.With(prometheus.Labels{}).Set(moonRiseHourMin)
-// 	moonSetTime.With(prometheus.Labels{}).Set(moonSetHourMin)
-//
-// 	sunRiseTime.With(prometheus.Labels{}).Set(sunRiseHourMin)
-// 	sunSetTime.With(prometheus.Labels{}).Set(sunSetHourMin)
-//
-// 	return nil
-// }
-
 func forecast(apiKey string) error {
 	w, err := owm.NewForecast("5", "C", "EN", apiKey) // valid options for first parameter are "5" and "16"
 	if err != nil {
