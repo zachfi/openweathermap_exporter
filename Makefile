@@ -1,7 +1,7 @@
 PROJECT_NAME := $(shell basename $(shell pwd))
 PROJECT_VER  := $(shell git describe --tags --always --dirty)
 GO_PKGS      := $(shell go list ./... | grep -v -e "/vendor/" -e "/example")
-GO_FILES     := $(shell find cmd pkg -type f -name "*.go")
+GO_FILES     := $(shell find cmd -type f -name "*.go")
 NATIVEOS     := $(shell go version | awk -F '[ /]' '{print $$4}')
 NATIVEARCH   := $(shell go version | awk -F '[ /]' '{print $$5}')
 SRCDIR       ?= .

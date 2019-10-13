@@ -25,8 +25,6 @@ var (
 	listenAddress string
 	interval      int
 	apiKey        string
-	latitude      float64
-	longitude     float64
 )
 
 func Execute() {
