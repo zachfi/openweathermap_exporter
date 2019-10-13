@@ -25,6 +25,8 @@ var (
 	listenAddress string
 	interval      int
 	apiKey        string
+	latitude      float64
+	longitude     float64
 )
 
 func Execute() {
@@ -88,6 +90,8 @@ func run(cmd *cobra.Command, args []string) {
 		log.Fatal("openweathermap api key must be present in the configuraiton")
 	}
 
+	longitude := viper.GetFloat64("openweathermap.longitude")
+	latitude := viper.GetFloat64("openweathermap.latitude")
 	interval = viper.GetInt("interval")
 
 	log.Infof("Starting prometheus HTTP metrics server: %s", listenAddress)
@@ -97,7 +101,7 @@ func run(cmd *cobra.Command, args []string) {
 	log.Debugf("Tick interval: %d", interval)
 	for range time.Tick(time.Duration(interval) * time.Second) {
 		log.Debug("Scraping metrics from openweathermap")
-		err := exporter.ScrapeMetrics(apiKey)
+		err := exporter.ScrapeMetrics(apiKey, longitude, latitude)
 		if err != nil {
 			log.Error(err)
 		}

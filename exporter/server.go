@@ -1,10 +1,10 @@
 package exporter
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 )
 
 func StartMetricsServer(bindAddr string) {

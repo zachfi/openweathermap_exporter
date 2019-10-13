@@ -5,6 +5,7 @@ import (
 
 	owm "github.com/briandowns/openweathermap"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -74,15 +75,10 @@ func init() {
 	)
 }
 
-func forecast(apiKey string) error {
+func forecast(apiKey string, coord *owm.Coordinates) error {
 	w, err := owm.NewForecast("5", "C", "EN", apiKey) // valid options for first parameter are "5" and "16"
 	if err != nil {
 		return err
-	}
-
-	coord := &owm.Coordinates{
-		Longitude: -122.588975,
-		Latitude:  45.554587,
 	}
 
 	err = w.DailyByCoordinates(coord, 50)
@@ -100,6 +96,9 @@ func forecast(apiKey string) error {
 
 	for i, p := range fore.List {
 		inHours := strconv.Itoa(i * 3)
+		// TODO parse time from forecast and calculate distance
+
+		// log.Debugf("Weather: %+v", p.Weather)
 
 		forecastHighTemp.With(prometheus.Labels{"inhours": inHours}).Set(p.Main.TempMax)
 		forecastLowTemp.With(prometheus.Labels{"inhours": inHours}).Set(p.Main.TempMin)
@@ -114,6 +113,8 @@ func forecast(apiKey string) error {
 	if err != nil {
 		return err
 	}
+
+	log.Debugf("Scrape for: %s", c.Name)
 
 	// log.Infof("%+v", c)
 	currentTemp.With(prometheus.Labels{}).Set(c.Main.Temp)
@@ -131,8 +132,14 @@ func forecast(apiKey string) error {
 	return nil
 }
 
-func ScrapeMetrics(apiKey string) error {
-	err := forecast(apiKey)
+func ScrapeMetrics(apiKey string, longitude, latitude float64) error {
+
+	coord := &owm.Coordinates{
+		Longitude: longitude,
+		Latitude:  latitude,
+	}
+
+	err := forecast(apiKey, coord)
 	if err != nil {
 		return err
 	}
