@@ -85,10 +85,7 @@ func forecast(apiKey string) error {
 		Latitude:  45.554587,
 	}
 
-	err = w.DailyByCoordinates(
-		coord,
-		5,
-	)
+	err = w.DailyByCoordinates(coord, 50)
 	if err != nil {
 		return err
 	}
@@ -102,7 +99,6 @@ func forecast(apiKey string) error {
 	// log.Infof("Entry count: %d", fore.Cnt)
 
 	for i, p := range fore.List {
-		// log.Infof("P: %+v", p)
 		inHours := strconv.Itoa(i * 3)
 
 		forecastHighTemp.With(prometheus.Labels{"inhours": inHours}).Set(p.Main.TempMax)
