@@ -27,6 +27,18 @@ var (
 	apiKey        string
 )
 
+type config struct {
+	Interval  int        `mapstructure:"interval"`
+	APIKey    string     `mapstructure:"apikey"`
+	Locations []Location `mapstructure:"locations"`
+}
+
+type Location struct {
+	Name      string
+	Latitude  float64
+	Longitude float64
+}
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -73,6 +85,7 @@ func initConfig() {
 		log.Debugf("Using config file: %s", viper.ConfigFileUsed())
 		cfgFile = viper.ConfigFileUsed()
 	}
+
 }
 
 func run(cmd *cobra.Command, args []string) {
@@ -82,26 +95,34 @@ func run(cmd *cobra.Command, args []string) {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	apiKey = viper.GetString("openweathermap.apikey")
+	apiKey = viper.GetString("apikey")
 
 	if apiKey == "" {
 		log.Fatal("openweathermap api key must be present in the configuraiton")
 	}
 
-	longitude := viper.GetFloat64("openweathermap.longitude")
-	latitude := viper.GetFloat64("openweathermap.latitude")
 	interval = viper.GetInt("interval")
+
+	var locations []Location
+	err := viper.UnmarshalKey("locations", &locations)
+	if err != nil {
+		log.Error(err)
+	}
+	log.Debugf("Locations: %+v", locations)
 
 	log.Infof("Starting prometheus HTTP metrics server: %s", listenAddress)
 	go exporter.StartMetricsServer(listenAddress)
 
-	// Load CA cert
 	log.Debugf("Tick interval: %d", interval)
 	for range time.Tick(time.Duration(interval) * time.Second) {
-		log.Debug("Scraping metrics from openweathermap")
-		err := exporter.ScrapeMetrics(apiKey, longitude, latitude)
-		if err != nil {
-			log.Error(err)
+
+		for _, r := range locations {
+			log.Debugf("Scraping metrics from openweathermap for location: %s", r.Name)
+			err := exporter.ScrapeMetrics(apiKey, r.Longitude, r.Latitude, r.Name)
+			if err != nil {
+				log.Error(err)
+			}
 		}
+
 	}
 }

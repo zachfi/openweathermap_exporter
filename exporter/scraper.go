@@ -12,52 +12,52 @@ var (
 	currentTemp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_current_temperature",
 		Help: "Temperature in Celcius",
-	}, []string{})
+	}, []string{"location"})
 
 	forecastHighTemp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_forecast_high_temperature",
 		Help: "Temperature in Celcius",
-	}, []string{"inhours"})
+	}, []string{"inhours", "location"})
 
 	forecastLowTemp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_forecast_low_temperature",
 		Help: "Temperature in Celcius",
-	}, []string{"inhours"})
+	}, []string{"inhours", "location"})
 
 	sunRiseTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_sunrise_time",
 		Help: "Time of Sun Rise",
-	}, nil)
+	}, []string{"location"})
 
 	sunSetTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_sunset_time",
 		Help: "Time of Sun Set",
-	}, nil)
+	}, []string{"location"})
 
 	windSpeed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_current_wind_speed",
 		Help: "The current speed of the wind",
-	}, nil)
+	}, []string{"location"})
 
 	windDegrees = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_current_wind_degrees",
 		Help: "The current degreese of the wind",
-	}, nil)
+	}, []string{"location"})
 
 	rain = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_current_rain",
 		Help: "The current rain",
-	}, nil)
+	}, []string{"location"})
 
 	snow = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_current_snow",
 		Help: "The current snow",
-	}, nil)
+	}, []string{"location"})
 
 	clouds = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_current_clouds",
 		Help: "The current clouds",
-	}, nil)
+	}, []string{"location"})
 )
 
 func init() {
@@ -75,7 +75,7 @@ func init() {
 	)
 }
 
-func forecast(apiKey string, coord *owm.Coordinates) error {
+func forecast(apiKey string, coord *owm.Coordinates, locationName string) error {
 	w, err := owm.NewForecast("5", "C", "EN", apiKey) // valid options for first parameter are "5" and "16"
 	if err != nil {
 		return err
@@ -100,8 +100,8 @@ func forecast(apiKey string, coord *owm.Coordinates) error {
 
 		// log.Debugf("Weather: %+v", p.Weather)
 
-		forecastHighTemp.With(prometheus.Labels{"inhours": inHours}).Set(p.Main.TempMax)
-		forecastLowTemp.With(prometheus.Labels{"inhours": inHours}).Set(p.Main.TempMin)
+		forecastHighTemp.With(prometheus.Labels{"inhours": inHours, "location": locationName}).Set(p.Main.TempMax)
+		forecastLowTemp.With(prometheus.Labels{"inhours": inHours, "location": locationName}).Set(p.Main.TempMin)
 	}
 
 	c, err := owm.NewCurrent("C", "EN", apiKey)
@@ -117,37 +117,32 @@ func forecast(apiKey string, coord *owm.Coordinates) error {
 	log.Debugf("Scrape for: %s", c.Name)
 
 	// log.Infof("%+v", c)
-	currentTemp.With(prometheus.Labels{}).Set(c.Main.Temp)
+	currentTemp.With(prometheus.Labels{"location": locationName}).Set(c.Main.Temp)
 
-	sunRiseTime.With(prometheus.Labels{}).Set(float64(c.Sys.Sunrise))
-	sunSetTime.With(prometheus.Labels{}).Set(float64(c.Sys.Sunset))
+	sunRiseTime.With(prometheus.Labels{"location": locationName}).Set(float64(c.Sys.Sunrise))
+	sunSetTime.With(prometheus.Labels{"location": locationName}).Set(float64(c.Sys.Sunset))
 
-	windSpeed.With(prometheus.Labels{}).Set(float64(c.Wind.Speed))
-	windDegrees.With(prometheus.Labels{}).Set(float64(c.Wind.Deg))
+	windSpeed.With(prometheus.Labels{"location": locationName}).Set(float64(c.Wind.Speed))
+	windDegrees.With(prometheus.Labels{"location": locationName}).Set(float64(c.Wind.Deg))
 
-	snow.With(prometheus.Labels{}).Set(float64(c.Snow.ThreeH))
-	rain.With(prometheus.Labels{}).Set(float64(c.Rain.ThreeH))
-	clouds.With(prometheus.Labels{}).Set(float64(c.Clouds.All))
+	snow.With(prometheus.Labels{"location": locationName}).Set(float64(c.Snow.ThreeH))
+	rain.With(prometheus.Labels{"location": locationName}).Set(float64(c.Rain.ThreeH))
+	clouds.With(prometheus.Labels{"location": locationName}).Set(float64(c.Clouds.All))
 
 	return nil
 }
 
-func ScrapeMetrics(apiKey string, longitude, latitude float64) error {
+func ScrapeMetrics(apiKey string, longitude, latitude float64, locationName string) error {
 
 	coord := &owm.Coordinates{
 		Longitude: longitude,
 		Latitude:  latitude,
 	}
 
-	err := forecast(apiKey, coord)
+	err := forecast(apiKey, coord, locationName)
 	if err != nil {
 		return err
 	}
-	//
-	// err = astroWatch(apiKey)
-	// if err != nil {
-	// 	return err
-	// }
 
 	return nil
 }
