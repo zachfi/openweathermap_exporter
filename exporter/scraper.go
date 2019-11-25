@@ -24,6 +24,16 @@ var (
 		Help: "Temperature in Celcius",
 	}, []string{"inhours", "location"})
 
+	forecastRain = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "owm_forecast_rain",
+		Help: "Rainfall inches",
+	}, []string{"inhours", "location"})
+
+	forecastSnow = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "owm_forecast_snow",
+		Help: "Snowfall inches",
+	}, []string{"inhours", "location"})
+
 	sunRiseTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "owm_sunrise_time",
 		Help: "Time of Sun Rise",
@@ -65,6 +75,8 @@ func init() {
 		currentTemp,
 		forecastHighTemp,
 		forecastLowTemp,
+		forecastRain,
+		forecastSnow,
 		sunRiseTime,
 		sunSetTime,
 		windSpeed,
@@ -98,7 +110,8 @@ func forecast(apiKey string, coord *owm.Coordinates, locationName string) error 
 		inHours := strconv.Itoa(i * 3)
 		// TODO parse time from forecast and calculate distance
 
-		// log.Debugf("Weather: %+v", p.Weather)
+		forecastRain.With(prometheus.Labels{"inhours": inHours, "location": locationName}).Set(p.Rain.ThreeH)
+		forecastSnow.With(prometheus.Labels{"inhours": inHours, "location": locationName}).Set(p.Snow.ThreeH)
 
 		forecastHighTemp.With(prometheus.Labels{"inhours": inHours, "location": locationName}).Set(p.Main.TempMax)
 		forecastLowTemp.With(prometheus.Labels{"inhours": inHours, "location": locationName}).Set(p.Main.TempMin)
