@@ -53,5 +53,5 @@ func loadYamlFile(filename string, d interface{}) error {
 
 func (c *Config) RegisterFlagsAndApplyDefaults(prefix string, f *flag.FlagSet) {
 	f.StringVar(&c.OtelEndpoint, "otel.endpoint", "", "otel endpoint, eg: tempo:4317")
-	f.StringVar(&c.ListenAddr, "listen.addr", ":9100", "address to listen on")
+	f.StringVar(&c.ListenAddr, "listen.addr", ":9101", "address to listen on")
 }
