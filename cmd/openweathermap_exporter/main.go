@@ -35,10 +35,12 @@ import (
 	"github.com/xaque208/znet/pkg/util"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	"google.golang.org/grpc"
 )
 
 const appName = "openweathermap_exporter"
@@ -73,19 +75,16 @@ func main() {
 	}
 	defer shutdownTracer()
 
-	// go exporter.StartMetricsServer(listenAddress)
-	// err := exporter.ScrapeMetrics(apiKey, r.Longitude, r.Latitude, r.Name)
+	o, err := owm.New(*cfg)
+	if err != nil {
+		_ = level.Error(logger).Log("msg", "failed to create OWM", "err", err)
+		os.Exit(1)
+	}
 
-	// o, err := owm.New(*cfg)
-	// if err != nil {
-	// 	_ = level.Error(logger).Log("msg", "failed to create OWM", "err", err)
-	// 	os.Exit(1)
-	// }
-
-	// if err := o.Run(); err != nil {
-	// 	_ = level.Error(logger).Log("msg", "error running OWM", "err", err)
-	// 	os.Exit(1)
-	// }
+	if err := o.Run(); err != nil {
+		_ = level.Error(logger).Log("msg", "error running OWM", "err", err)
+		os.Exit(1)
+	}
 }
 
 func loadConfig() (*owm.Config, error) {
@@ -148,7 +147,7 @@ func installOpenTelemetryTracer(config *owm.Config, logger log.Logger) (func(), 
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(fmt.Sprintf("%s-%s", appName, config.Target)),
+			semconv.ServiceNameKey.String(appName),
 			semconv.ServiceVersionKey.String(Version),
 		),
 		resource.WithHost(),
