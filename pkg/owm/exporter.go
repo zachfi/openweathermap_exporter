@@ -42,27 +42,15 @@ var (
 func (o *OWM) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricWeatherForecastDesc
 	ch <- metricWeatherCurrentDesc
+	ch <- metricWeatherEpoch
 }
 
 func (o *OWM) Collect(ch chan<- prometheus.Metric) {
 
 	for _, location := range o.cfg.Locations {
-		// TODO parse time from forecast and calculate distance
-		// handle snow
-		// handle rain
-		// handle clouds
-		// handle clouds
-		// handle wind speed
-		// handle wind direction
+		//
 		// handle wind gust - Probably needs a PR upstream
 		// handle UTC DT
-		// handle temp
-		// handle temp_min
-		// handle temp_max
-		// handle pressure
-		// handle sea_level
-		// handle grnd_level
-		// handle humidity
 		// handle feels_like - needs upstream PR
 
 		o.collectForecast(ch, location)
@@ -181,6 +169,95 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		float64(c.Sys.Sunset),
 		location.Name,
 		"sunset",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		c.Main.Temp,
+		location.Name,
+		"current_temp",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		c.Main.TempMax,
+		location.Name,
+		"current_temp_max",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		c.Main.TempMin,
+		location.Name,
+		"current_temp_min",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		c.Main.GrndLevel,
+		location.Name,
+		"current_pressure",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		float64(c.Main.Humidity),
+		location.Name,
+		"current_humidity",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		c.Wind.Speed,
+		location.Name,
+		"current_wind_speed",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		c.Wind.Deg,
+		location.Name,
+		"current_wind_degree",
+	)
+
+	// Send PR upstream for this
+	// ch <- prometheus.MustNewConstMetric(
+	// 	metricWeatherCurrentDesc,
+	// 	prometheus.CounterValue,
+	// 	float64(c.Wind.Gust),
+	// 	location.Name,
+	// 	"current_wind_gust",
+	// )
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		float64(c.Snow.ThreeH),
+		location.Name,
+		"current_snow_threeh",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		float64(c.Rain.ThreeH),
+		location.Name,
+		"current_rain_threeh",
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricWeatherCurrentDesc,
+		prometheus.CounterValue,
+		float64(c.Clouds.All),
+		location.Name,
+		"current_cloud_cover",
 	)
 
 	// currentTemp.With(prometheus.Labels{"location": locationName}).Set(c.Main.Temp)
