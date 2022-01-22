@@ -1,4 +1,4 @@
-project_name: znet
+project_name: openweathermap_exporter
 
 env:
   - GO111MODULE=on
@@ -8,9 +8,9 @@ before:
     - go mod download
 
 builds:
-  - id: znet
-    dir: cmd/znet
-    binary: znet
+  - id: openweathermap_exporter
+    dir: cmd/openweathermap_exporter
+    binary: openweathermap_exporter
     env:
       - CGO_ENABLED=0
     goarm:
@@ -44,11 +44,11 @@ changelog:
 dockers:
   - dockerfile: build/package/Dockerfile
     image_templates:
-      - "xaque208/znet:{{ .Tag }}"
-      - "xaque208/znet:v{{ .Major }}.{{ .Minor }}"
-      - "xaque208/znet:latest"
+      - "xaque208/openweathermap_exporter:{{ .Tag }}"
+      - "xaque208/openweathermap_exporter:v{{ .Major }}.{{ .Minor }}"
+      - "xaque208/openweathermap_exporter:latest"
     build_flag_templates:
       - "--pull"
-      - "--label=repository=https://github.com/xaque208/znet"
+      - "--label=repository=https://github.com/xaque208/openweathermap_exporter"
 release:
   name_template: "{{.ProjectName}} v{{.Version}}"
