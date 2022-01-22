@@ -1,8 +1,8 @@
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
-# github.com/briandowns/openweathermap v0.0.0-20180605213918-2adae1e5d102
-## explicit
+# github.com/briandowns/openweathermap v0.16.0
+## explicit; go 1.13
 github.com/briandowns/openweathermap
 # github.com/cenkalti/backoff/v4 v4.1.2
 ## explicit; go 1.13
