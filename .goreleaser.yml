@@ -42,7 +42,7 @@ changelog:
   skip: true
 
 dockers:
-  - dockerfile: build/package/Dockerfile
+  - dockerfile: Dockerfile
     image_templates:
       - "xaque208/openweathermap_exporter:{{ .Tag }}"
       - "xaque208/openweathermap_exporter:v{{ .Major }}.{{ .Minor }}"

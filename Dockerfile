@@ -1,5 +1,5 @@
 FROM alpine:3.15 as certs
-COPY ./bin/linux/openweathermap_exporter /bin/openweathermap_exporter
+COPY ./openweathermap_exporter /bin/openweathermap_exporter
 RUN chmod 0700 /bin/openweathermap_exporter
 RUN mkdir /var/openweathermap_exporter
 RUN apk --update add ca-certificates
