@@ -15,5 +15,5 @@ jobs:
           fetch-depth: 20
       - uses: g4s8/gitlint-action@0.2
         with:
-          since: "2022-01-01"
+          since: "2022-01-18"
           pattern: '(chore|docs|feat|fix|refactor|tests?)(\([^\)]+\))?: .*'
