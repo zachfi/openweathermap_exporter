@@ -279,7 +279,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Snow.ThreeH,
 		location.Name,
-		"current_snow_threeh",
+		"snow_threeh",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -287,7 +287,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Rain.ThreeH,
 		location.Name,
-		"current_rain_threeh",
+		"rain_threeh",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -295,6 +295,6 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		float64(c.Clouds.All),
 		location.Name,
-		"current_cloud_cover",
+		"cloud_cover",
 	)
 }
