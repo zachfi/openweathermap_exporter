@@ -1,8 +1,7 @@
 package owm
 
 import (
-	"fmt"
-	"time"
+	"strconv"
 
 	owm "github.com/briandowns/openweathermap"
 	"github.com/go-kit/log/level"
@@ -11,13 +10,6 @@ import (
 
 var (
 	metricWeatherForecastDesc = prometheus.NewDesc(
-		"weather_forecast",
-		"Weather condition forecast",
-		[]string{"location", "condition", "inhours"},
-		nil,
-	)
-
-	metricWeatherForecastTempDesc = prometheus.NewDesc(
 		"weather_forecast",
 		"Weather condition forecast",
 		[]string{"location", "condition", "inhours"},
@@ -78,56 +70,102 @@ func (o *OWM) collectForecast(ch chan<- prometheus.Metric, location Location) {
 		return
 	}
 
-	// fore := w.ForecastWeatherJson.(*owm.Forecast5WeatherData)
+	fore := w.ForecastWeatherJson.(*owm.Forecast5WeatherData)
 
-	// for i, p := range fore.List {
-	// inHours := strconv.Itoa(i * 3)
+	for i, p := range fore.List {
+		inHours := strconv.Itoa(i * 3)
 
-	// ch <- prometheus.MustNewConstMetric(
-	// 	metricWeatherForecastDesc,
-	// 	prometheus.GaugeValue,
-	// 	p.Rain.ThreeH,
-	// 	location.Name,
-	// 	"rain",
-	// 	inHours,
-	// )
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Main.Temp,
+			location.Name,
+			"temp",
+			inHours,
+		)
 
-	// ch <- prometheus.MustNewConstMetric(
-	// 	metricWeatherForecastDesc,
-	// 	prometheus.GaugeValue,
-	// 	p.Snow.ThreeH,
-	// 	location.Name,
-	// 	"snow",
-	// 	inHours,
-	// )
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Main.TempMax,
+			location.Name,
+			"temp_max",
+			inHours,
+		)
 
-	// ch <- prometheus.MustNewConstMetric(
-	// 	metricWeatherForecastDesc,
-	// 	prometheus.GaugeValue,
-	// 	float64(p.Clouds.All),
-	// 	location.Name,
-	// 	"clouds",
-	// 	inHours,
-	// )
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Main.TempMin,
+			location.Name,
+			"temp_min",
+			inHours,
+		)
 
-	// ch <- prometheus.MustNewConstMetric(
-	// 	metricWeatherForecastDesc,
-	// 	prometheus.GaugeValue,
-	// 	float64(p.Clouds.All),
-	// 	location.Name,
-	// 	"clouds",
-	// 	inHours,
-	// )
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Main.GrndLevel,
+			location.Name,
+			"pressure",
+			inHours,
+		)
 
-	// }
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			float64(p.Main.Humidity),
+			location.Name,
+			"humidity",
+			inHours,
+		)
 
-	// ch <- prometheus.MustNewConstMetric(metricOverridesLimitsDesc, prometheus.GaugeValue, float64(limits.MaxLocalTracesPerUser), MetricMaxLocalTracesPerUser, tenant)
-	// ch <- prometheus.MustNewConstMetric(metricOverridesLimitsDesc, prometheus.GaugeValue, float64(limits.MaxGlobalTracesPerUser), MetricMaxGlobalTracesPerUser, tenant)
-	// ch <- prometheus.MustNewConstMetric(metricOverridesLimitsDesc, prometheus.GaugeValue, float64(limits.MaxBytesPerTrace), MetricMaxBytesPerTrace, tenant)
-	// ch <- prometheus.MustNewConstMetric(metricOverridesLimitsDesc, prometheus.GaugeValue, float64(limits.MaxSearchBytesPerTrace), MetricMaxSearchBytesPerTrace, tenant)
-	// ch <- prometheus.MustNewConstMetric(metricOverridesLimitsDesc, prometheus.GaugeValue, float64(limits.IngestionRateLimitBytes), MetricIngestionRateLimitBytes, tenant)
-	// ch <- prometheus.MustNewConstMetric(metricOverridesLimitsDesc, prometheus.GaugeValue, float64(limits.IngestionBurstSizeBytes), MetricIngestionBurstSizeBytes, tenant)
-	// ch <- prometheus.MustNewConstMetric(metricOverridesLimitsDesc, prometheus.GaugeValue, float64(limits.BlockRetention), MetricBlockRetention, tenant)
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Wind.Speed,
+			location.Name,
+			"wind_speed",
+			inHours,
+		)
+
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Wind.Deg,
+			location.Name,
+			"wind_degree",
+			inHours,
+		)
+
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Rain.ThreeH,
+			location.Name,
+			"rain",
+			inHours,
+		)
+
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			p.Snow.ThreeH,
+			location.Name,
+			"snow",
+			inHours,
+		)
+
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherForecastDesc,
+			prometheus.GaugeValue,
+			float64(p.Clouds.All),
+			location.Name,
+			"clouds",
+			inHours,
+		)
+
+	}
 
 }
 
@@ -149,8 +187,8 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		return
 	}
 
-	sunrise := time.Unix(int64(c.Sys.Sunrise), 0)
-	_ = level.Info(o.logger).Log("msg", "current", "sunrise", fmt.Sprintf("%+v", sunrise.String()))
+	// sunrise := time.Unix(int64(c.Sys.Sunrise), 0)
+	// _ = level.Info(o.logger).Log("msg", "current", "sunrise", fmt.Sprintf("%+v", sunrise.String()))
 
 	ch <- prometheus.MustNewConstMetric(
 		metricWeatherEpoch,
@@ -160,8 +198,8 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		"sunrise",
 	)
 
-	sunset := time.Unix(int64(c.Sys.Sunset), 0)
-	_ = level.Info(o.logger).Log("msg", "current", "sunset", fmt.Sprintf("%+v", sunset.String()))
+	// sunset := time.Unix(int64(c.Sys.Sunset), 0)
+	// _ = level.Info(o.logger).Log("msg", "current", "sunset", fmt.Sprintf("%+v", sunset.String()))
 
 	ch <- prometheus.MustNewConstMetric(
 		metricWeatherEpoch,
@@ -176,7 +214,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Main.Temp,
 		location.Name,
-		"current_temp",
+		"temp",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -184,7 +222,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Main.TempMax,
 		location.Name,
-		"current_temp_max",
+		"temp_max",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -192,7 +230,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Main.TempMin,
 		location.Name,
-		"current_temp_min",
+		"temp_min",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -200,7 +238,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Main.GrndLevel,
 		location.Name,
-		"current_pressure",
+		"pressure",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -208,7 +246,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		float64(c.Main.Humidity),
 		location.Name,
-		"current_humidity",
+		"humidity",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -216,7 +254,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Wind.Speed,
 		location.Name,
-		"current_wind_speed",
+		"wind_speed",
 	)
 
 	ch <- prometheus.MustNewConstMetric(
@@ -224,7 +262,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		prometheus.CounterValue,
 		c.Wind.Deg,
 		location.Name,
-		"current_wind_degree",
+		"wind_degree",
 	)
 
 	// Send PR upstream for this
@@ -239,7 +277,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 	ch <- prometheus.MustNewConstMetric(
 		metricWeatherCurrentDesc,
 		prometheus.CounterValue,
-		float64(c.Snow.ThreeH),
+		c.Snow.ThreeH,
 		location.Name,
 		"current_snow_threeh",
 	)
@@ -247,7 +285,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 	ch <- prometheus.MustNewConstMetric(
 		metricWeatherCurrentDesc,
 		prometheus.CounterValue,
-		float64(c.Rain.ThreeH),
+		c.Rain.ThreeH,
 		location.Name,
 		"current_rain_threeh",
 	)
@@ -259,16 +297,4 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		location.Name,
 		"current_cloud_cover",
 	)
-
-	// currentTemp.With(prometheus.Labels{"location": locationName}).Set(c.Main.Temp)
-
-	// sunRiseTime.With(prometheus.Labels{"location": locationName}).Set(float64(c.Sys.Sunrise))
-	// sunSetTime.With(prometheus.Labels{"location": locationName}).Set(float64(c.Sys.Sunset))
-
-	// windSpeed.With(prometheus.Labels{"location": locationName}).Set(float64(c.Wind.Speed))
-	// windDegrees.With(prometheus.Labels{"location": locationName}).Set(float64(c.Wind.Deg))
-
-	// snow.With(prometheus.Labels{"location": locationName}).Set(float64(c.Snow.ThreeH))
-	// rain.With(prometheus.Labels{"location": locationName}).Set(float64(c.Rain.ThreeH))
-	// clouds.With(prometheus.Labels{"location": locationName}).Set(float64(c.Clouds.All))
 }
