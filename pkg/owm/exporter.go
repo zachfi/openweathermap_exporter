@@ -1,11 +1,16 @@
 package owm
 
 import (
+	"context"
+	"log"
 	"strconv"
 
 	owm "github.com/briandowns/openweathermap"
+
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -23,7 +28,21 @@ var (
 		nil,
 	)
 
-	metricWeatherEpoch = prometheus.NewDesc(
+	metricUVIndexCurrentDesc = prometheus.NewDesc(
+		"uv_index_current",
+		"Current UV Index",
+		[]string{"location"},
+		nil,
+	)
+
+	metricPollutionCurrentDesc = prometheus.NewDesc(
+		"air_pollution_current",
+		"Current Air Pollution",
+		[]string{"location"},
+		nil,
+	)
+
+	metricWeatherEpochDesc = prometheus.NewDesc(
 		"weather_epoch",
 		"Weather event, (sunrise|sunset)",
 		[]string{"location", "event"},
@@ -34,31 +53,42 @@ var (
 func (o *OWM) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricWeatherForecastDesc
 	ch <- metricWeatherCurrentDesc
-	ch <- metricWeatherEpoch
+	ch <- metricWeatherEpochDesc
+	ch <- metricUVIndexCurrentDesc
+	ch <- metricPollutionCurrentDesc
 }
 
 func (o *OWM) Collect(ch chan<- prometheus.Metric) {
+	ctx := context.Background()
+	ctx, span := o.tracer.Start(ctx, "owmCollect")
+	defer span.End()
+
+	level.Debug(o.logger).Log("msg", "collecting openweathermap data",
+		"traceID", trace.SpanContextFromContext(ctx).TraceID().String(),
+	)
 
 	for _, location := range o.cfg.Locations {
 		//
 		// handle wind gust - Probably needs a PR upstream
 		// handle UTC DT
 		// handle feels_like - needs upstream PR
-
-		o.collectForecast(ch, location)
-		o.collectCurrent(ch, location)
+		o.collectWeatherForecast(ctx, ch, location)
+		o.collectCurrentWeather(ctx, ch, location)
+		o.collectPollution(ctx, ch, location)
 	}
 
 }
 
-func (o *OWM) collectForecast(ch chan<- prometheus.Metric, location Location) {
+func (o *OWM) collectWeatherForecast(ctx context.Context, ch chan<- prometheus.Metric, location Location) {
+	ctx, span := o.tracer.Start(ctx, "collectWeatherForecast")
+	defer span.End()
 
 	coord := &owm.Coordinates{
 		Longitude: location.Longitude,
 		Latitude:  location.Latitude,
 	}
 
-	w, err := owm.NewForecast("5", "C", "EN", o.cfg.APIKey) // valid options for first parameter are "5" and "16"
+	w, err := owm.NewForecast("5", "C", "EN", o.cfg.APIKey, owm.WithHttpClient(o.client)) // valid options for first parameter are "5" and "16"
 	if err != nil {
 		_ = level.Error(o.logger).Log("msg", "failed to refresh forecast", "err", err)
 		return
@@ -75,108 +105,42 @@ func (o *OWM) collectForecast(ch chan<- prometheus.Metric, location Location) {
 	for i, p := range fore.List {
 		inHours := strconv.Itoa(i * 3)
 
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Main.Temp,
-			location.Name,
-			"temp",
-			inHours,
-		)
+		conditions := map[string]float64{
+			"clouds":      float64(p.Clouds.All),
+			"humidity":    float64(p.Main.Humidity),
+			"pressure":    p.Main.GrndLevel,
+			"rain":        p.Rain.ThreeH,
+			"snow":        p.Snow.ThreeH,
+			"temp_max":    p.Main.TempMax,
+			"temp_min":    p.Main.TempMin,
+			"temp":        p.Main.Temp,
+			"wind_degree": p.Wind.Deg,
+			"wind_speed":  p.Wind.Speed,
+		}
 
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Main.TempMax,
-			location.Name,
-			"temp_max",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Main.TempMin,
-			location.Name,
-			"temp_min",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Main.GrndLevel,
-			location.Name,
-			"pressure",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			float64(p.Main.Humidity),
-			location.Name,
-			"humidity",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Wind.Speed,
-			location.Name,
-			"wind_speed",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Wind.Deg,
-			location.Name,
-			"wind_degree",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Rain.ThreeH,
-			location.Name,
-			"rain",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			p.Snow.ThreeH,
-			location.Name,
-			"snow",
-			inHours,
-		)
-
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherForecastDesc,
-			prometheus.GaugeValue,
-			float64(p.Clouds.All),
-			location.Name,
-			"clouds",
-			inHours,
-		)
-
+		for condition, value := range conditions {
+			ch <- prometheus.MustNewConstMetric(
+				metricWeatherForecastDesc,
+				prometheus.GaugeValue,
+				value,
+				location.Name,
+				condition,
+				inHours,
+			)
+		}
 	}
-
 }
 
-func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
+func (o *OWM) collectCurrentWeather(ctx context.Context, ch chan<- prometheus.Metric, location Location) {
+	ctx, span := o.tracer.Start(ctx, "collectCurrentWeather")
+	defer span.End()
 
 	coord := &owm.Coordinates{
 		Longitude: location.Longitude,
 		Latitude:  location.Latitude,
 	}
 
-	c, err := owm.NewCurrent("C", "EN", o.cfg.APIKey)
+	c, err := owm.NewCurrent("C", "EN", o.cfg.APIKey, owm.WithHttpClient(o.client))
 	if err != nil {
 		_ = level.Error(o.logger).Log("msg", "failed to get new current client", "err", err)
 	}
@@ -191,7 +155,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 	// _ = level.Info(o.logger).Log("msg", "current", "sunrise", fmt.Sprintf("%+v", sunrise.String()))
 
 	ch <- prometheus.MustNewConstMetric(
-		metricWeatherEpoch,
+		metricWeatherEpochDesc,
 		prometheus.CounterValue,
 		float64(c.Sys.Sunrise),
 		location.Name,
@@ -202,7 +166,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 	// _ = level.Info(o.logger).Log("msg", "current", "sunset", fmt.Sprintf("%+v", sunset.String()))
 
 	ch <- prometheus.MustNewConstMetric(
-		metricWeatherEpoch,
+		metricWeatherEpochDesc,
 		prometheus.CounterValue,
 		float64(c.Sys.Sunset),
 		location.Name,
@@ -271,7 +235,7 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 	// 	prometheus.CounterValue,
 	// 	float64(c.Wind.Gust),
 	// 	location.Name,
-	// 	"current_wind_gust",
+	// 	"current_wind_gust",modules/inventory/network.go:
 	// )
 
 	ch <- prometheus.MustNewConstMetric(
@@ -297,4 +261,40 @@ func (o *OWM) collectCurrent(ch chan<- prometheus.Metric, location Location) {
 		location.Name,
 		"cloud_cover",
 	)
+}
+
+func (o *OWM) collectPollution(ctx context.Context, ch chan<- prometheus.Metric, location Location) {
+	ctx, span := o.tracer.Start(ctx, "collectPollution")
+	defer span.End()
+
+	coord := &owm.Coordinates{
+		Longitude: location.Longitude,
+		Latitude:  location.Latitude,
+	}
+
+	pollution, err := owm.NewPollution(o.cfg.APIKey, owm.WithHttpClient(o.client))
+	if err != nil {
+		_ = level.Error(o.logger).Log("msg", "failed to get new pollution data", "err", err)
+	}
+
+	params := &owm.PollutionParameters{
+		Location: *coord,
+		Datetime: "current",
+	}
+
+	if err := pollution.PollutionByParams(params); err != nil {
+		log.Fatalln(err)
+		_ = level.Error(o.logger).Log("msg", "failed to update pollution data", "err", err)
+	}
+
+	for _, p := range pollution.Data {
+		ch <- prometheus.MustNewConstMetric(
+			metricPollutionCurrentDesc,
+			prometheus.GaugeValue,
+			p.Value,
+			location.Name,
+			"pollution",
+		)
+	}
+
 }
