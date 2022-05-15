@@ -36,7 +36,7 @@ var (
 	)
 
 	metricPollutionCurrentDesc = prometheus.NewDesc(
-		"air_pollution_current",
+		"pollution_current",
 		"Current Air Pollution",
 		[]string{"location"},
 		nil,
@@ -63,7 +63,7 @@ func (o *OWM) Collect(ch chan<- prometheus.Metric) {
 	ctx, span := o.tracer.Start(ctx, "owmCollect")
 	defer span.End()
 
-	level.Debug(o.logger).Log("msg", "collecting openweathermap data",
+	_ = level.Debug(o.logger).Log("msg", "collecting openweathermap data",
 		"traceID", trace.SpanContextFromContext(ctx).TraceID().String(),
 	)
 
