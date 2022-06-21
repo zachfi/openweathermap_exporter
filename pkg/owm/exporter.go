@@ -2,14 +2,15 @@ package owm
 
 import (
 	"context"
-	"log"
 	"strconv"
+	"time"
 
 	owm "github.com/briandowns/openweathermap"
 
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -28,16 +29,23 @@ var (
 		nil,
 	)
 
-	metricUVIndexCurrentDesc = prometheus.NewDesc(
-		"uv_index_current",
-		"Current UV Index",
+	metricUVIndexCurrentHighDesc = prometheus.NewDesc(
+		"uv_index_current_high",
+		"Current UV Index High",
+		[]string{"location"},
+		nil,
+	)
+
+	metricUVIndexCurrentLowDesc = prometheus.NewDesc(
+		"uv_index_current_low",
+		"Current UV Index Low",
 		[]string{"location"},
 		nil,
 	)
 
 	metricPollutionCurrentDesc = prometheus.NewDesc(
-		"pollution_current",
-		"Current Air Pollution",
+		"pollution_current_aqi",
+		"Current Air Pollution (AQI)",
 		[]string{"location"},
 		nil,
 	)
@@ -54,12 +62,15 @@ func (o *OWM) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricWeatherForecastDesc
 	ch <- metricWeatherCurrentDesc
 	ch <- metricWeatherEpochDesc
-	ch <- metricUVIndexCurrentDesc
+	ch <- metricUVIndexCurrentLowDesc
+	ch <- metricUVIndexCurrentHighDesc
 	ch <- metricPollutionCurrentDesc
 }
 
 func (o *OWM) Collect(ch chan<- prometheus.Metric) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
 	ctx, span := o.tracer.Start(ctx, "owmCollect")
 	defer span.End()
 
@@ -75,6 +86,7 @@ func (o *OWM) Collect(ch chan<- prometheus.Metric) {
 		o.collectWeatherForecast(ctx, ch, location)
 		o.collectCurrentWeather(ctx, ch, location)
 		o.collectPollution(ctx, ch, location)
+		o.collectUvIndex(ctx, ch, location)
 	}
 
 }
@@ -154,113 +166,46 @@ func (o *OWM) collectCurrentWeather(ctx context.Context, ch chan<- prometheus.Me
 	// sunrise := time.Unix(int64(c.Sys.Sunrise), 0)
 	// _ = level.Info(o.logger).Log("msg", "current", "sunrise", fmt.Sprintf("%+v", sunrise.String()))
 
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherEpochDesc,
-		prometheus.CounterValue,
-		float64(c.Sys.Sunrise),
-		location.Name,
-		"sunrise",
-	)
+	epochs := map[string]float64{
+		"sunrise": float64(c.Sys.Sunrise),
+		"sunset":  float64(c.Sys.Sunset),
+	}
+
+	for epoch, value := range epochs {
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherEpochDesc,
+			prometheus.CounterValue,
+			value,
+			location.Name,
+			epoch,
+		)
+	}
 
 	// sunset := time.Unix(int64(c.Sys.Sunset), 0)
 	// _ = level.Info(o.logger).Log("msg", "current", "sunset", fmt.Sprintf("%+v", sunset.String()))
 
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherEpochDesc,
-		prometheus.CounterValue,
-		float64(c.Sys.Sunset),
-		location.Name,
-		"sunset",
-	)
+	conditions := map[string]float64{
+		"clouds":      float64(c.Clouds.All),
+		"humidity":    float64(c.Main.Humidity),
+		"pressure":    c.Main.GrndLevel,
+		"rain":        c.Rain.OneH,
+		"snow":        c.Snow.OneH,
+		"temp_max":    c.Main.TempMax,
+		"temp_min":    c.Main.TempMin,
+		"temp":        c.Main.Temp,
+		"wind_degree": c.Wind.Deg,
+		"wind_speed":  c.Wind.Speed,
+	}
 
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Main.Temp,
-		location.Name,
-		"temp",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Main.TempMax,
-		location.Name,
-		"temp_max",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Main.TempMin,
-		location.Name,
-		"temp_min",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Main.GrndLevel,
-		location.Name,
-		"pressure",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		float64(c.Main.Humidity),
-		location.Name,
-		"humidity",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Wind.Speed,
-		location.Name,
-		"wind_speed",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Wind.Deg,
-		location.Name,
-		"wind_degree",
-	)
-
-	// Send PR upstream for this
-	// ch <- prometheus.MustNewConstMetric(
-	// 	metricWeatherCurrentDesc,
-	// 	prometheus.CounterValue,
-	// 	float64(c.Wind.Gust),
-	// 	location.Name,
-	// 	"current_wind_gust",modules/inventory/network.go:
-	// )
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Snow.ThreeH,
-		location.Name,
-		"snow_threeh",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		c.Rain.ThreeH,
-		location.Name,
-		"rain_threeh",
-	)
-
-	ch <- prometheus.MustNewConstMetric(
-		metricWeatherCurrentDesc,
-		prometheus.CounterValue,
-		float64(c.Clouds.All),
-		location.Name,
-		"cloud_cover",
-	)
+	for condition, value := range conditions {
+		ch <- prometheus.MustNewConstMetric(
+			metricWeatherCurrentDesc,
+			prometheus.GaugeValue,
+			value,
+			location.Name,
+			condition,
+		)
+	}
 }
 
 func (o *OWM) collectPollution(ctx context.Context, ch chan<- prometheus.Metric, location Location) {
@@ -274,6 +219,7 @@ func (o *OWM) collectPollution(ctx context.Context, ch chan<- prometheus.Metric,
 
 	pollution, err := owm.NewPollution(o.cfg.APIKey, owm.WithHttpClient(o.client))
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		_ = level.Error(o.logger).Log("msg", "failed to get new pollution data", "err", err)
 	}
 
@@ -283,18 +229,58 @@ func (o *OWM) collectPollution(ctx context.Context, ch chan<- prometheus.Metric,
 	}
 
 	if err := pollution.PollutionByParams(params); err != nil {
-		log.Fatalln(err)
+		span.SetStatus(codes.Error, err.Error())
 		_ = level.Error(o.logger).Log("msg", "failed to update pollution data", "err", err)
 	}
 
-	for _, p := range pollution.Data {
+	for _, p := range pollution.List {
 		ch <- prometheus.MustNewConstMetric(
 			metricPollutionCurrentDesc,
 			prometheus.GaugeValue,
-			p.Value,
+			p.Main.Aqi,
 			location.Name,
-			"pollution",
 		)
 	}
+}
 
+func (o *OWM) collectUvIndex(ctx context.Context, ch chan<- prometheus.Metric, location Location) {
+	ctx, span := o.tracer.Start(ctx, "collectUvIndex")
+	defer span.End()
+
+	coord := &owm.Coordinates{
+		Longitude: location.Longitude,
+		Latitude:  location.Latitude,
+	}
+
+	uv, err := owm.NewUV(o.cfg.APIKey, owm.WithHttpClient(o.client))
+	if err != nil {
+		_ = level.Error(o.logger).Log("msg", "failed to get new pollution data", "err", err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	if err := uv.Current(coord); err != nil {
+		_ = level.Error(o.logger).Log("msg", "failed to get current UV data", "err", err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	info, err := uv.UVInformation()
+	if err != nil {
+		_ = level.Error(o.logger).Log("msg", "failed to update UV index information", "err", err)
+		span.SetStatus(codes.Error, err.Error())
+		return
+	}
+
+	ch <- prometheus.MustNewConstMetric(
+		metricUVIndexCurrentLowDesc,
+		prometheus.GaugeValue,
+		info[0].UVIndex[0],
+		location.Name,
+	)
+
+	ch <- prometheus.MustNewConstMetric(
+		metricUVIndexCurrentHighDesc,
+		prometheus.GaugeValue,
+		info[0].UVIndex[1],
+		location.Name,
+	)
 }
