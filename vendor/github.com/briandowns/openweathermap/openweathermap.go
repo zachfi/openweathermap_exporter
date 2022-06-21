@@ -1,4 +1,4 @@
-// Copyright 2015 Brian J. Downs
+// Copyright 2022 Brian J. Downs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,55 +17,105 @@ package openweathermap
 import (
 	"errors"
 	"net/http"
+	"strings"
 )
 
-var errUnitUnavailable = errors.New("unit unavailable")
-var errLangUnavailable = errors.New("language unavailable")
-var errInvalidKey = errors.New("invalid api key")
-var errInvalidOption = errors.New("invalid option")
-var errInvalidHttpClient = errors.New("invalid http client")
-var errForecastUnavailable = errors.New("forecast unavailable")
+var (
+	errUnitUnavailable     = errors.New("unit unavailable")
+	errLangUnavailable     = errors.New("language unavailable")
+	errInvalidKey          = errors.New("invalid api key")
+	errInvalidOption       = errors.New("invalid option")
+	errInvalidHttpClient   = errors.New("invalid http client")
+	errForecastUnavailable = errors.New("forecast unavailable")
+	errExcludesUnavailable = errors.New("onecall excludes unavailable")
+	errCountOfCityIDs      = errors.New("count of ids should not be more than 20 per request")
+)
 
 // DataUnits represents the character chosen to represent the temperature notation
 var DataUnits = map[string]string{"C": "metric", "F": "imperial", "K": "internal"}
 var (
-	baseURL        = "http://api.openweathermap.org/data/2.5/weather?%s"
-	iconURL        = "http://openweathermap.org/img/w/%s"
-	stationURL     = "http://api.openweathermap.org/data/2.5/station?id=%d"
-	forecast5Base  = "http://api.openweathermap.org/data/2.5/forecast?appid=%s&%s&mode=json&units=%s&lang=%s&cnt=%d"
-	forecast16Base = "http://api.openweathermap.org/data/2.5/forecast/daily?appid=%s&%s&mode=json&units=%s&lang=%s&cnt=%d"
-	historyURL     = "http://api.openweathermap.org/data/2.5/history/%s"
-	pollutionURL   = "http://api.openweathermap.org/pollution/v1/co/"
-	uvURL          = "http://api.openweathermap.org/data/2.5/"
-	dataPostURL    = "http://openweathermap.org/data/post"
+	baseURL        = "https://api.openweathermap.org/data/2.5/weather?%s"
+	onecallURL     = "https://api.openweathermap.org/data/2.5/onecall?%s"
+	iconURL        = "https://openweathermap.org/img/w/%s"
+	groupURL       = "http://api.openweathermap.org/data/2.5/group?%s"
+	stationURL     = "https://api.openweathermap.org/data/2.5/station?id=%d"
+	forecast5Base  = "https://api.openweathermap.org/data/2.5/forecast?appid=%s&%s&mode=json&units=%s&lang=%s&cnt=%d"
+	forecast16Base = "https://api.openweathermap.org/data/2.5/forecast/daily?appid=%s&%s&mode=json&units=%s&lang=%s&cnt=%d"
+	historyURL     = "https://api.openweathermap.org/data/2.5/history/%s"
+	pollutionURL   = "https://api.openweathermap.org/data/2.5/air_pollution?appid=%s&lat=%s&lon=%s"
+	uvURL          = "https://api.openweathermap.org/data/2.5/"
+	dataPostURL    = "https://openweathermap.org/data/post"
 )
 
 // LangCodes holds all supported languages to be used
 // inspried and sourced from @bambocher (github.com/bambocher)
 var LangCodes = map[string]string{
-	"EN":    "English",
-	"RU":    "Russian",
-	"IT":    "Italian",
-	"ES":    "Spanish",
-	"SP":    "Spanish",
-	"UK":    "Ukrainian",
-	"UA":    "Ukrainian",
-	"DE":    "German",
-	"PT":    "Portuguese",
-	"RO":    "Romanian",
-	"PL":    "Polish",
-	"FI":    "Finnish",
-	"NL":    "Dutch",
-	"FR":    "French",
+	"AF":    "Afrikaans",
+	"AL":    "Albanian",
+	"AR":    "Arabic",
+	"AZ":    "Azerbaijani",
 	"BG":    "Bulgarian",
-	"SV":    "Swedish",
-	"SE":    "Swedish",
-	"TR":    "Turkish",
-	"HR":    "Croatian",
 	"CA":    "Catalan",
-	"ZH_TW": "Chinese Traditional",
-	"ZH":    "Chinese Simplified",
+	"CZ":    "Czech",
+	"DA":    "Danish",
+	"DE":    "German",
+	"EL":    "Greek",
+	"EN":    "English",
+	"ES":    "Spanish",
+	"EU":    "Basque",
+	"FA":    "Persian (Farsi)",
+	"FI":    "Finnish",
+	"FR":    "French",
+	"GL":    "Galician",
+	"HE":    "Hebrew",
+	"HI":    "Hindi",
+	"HR":    "Croatian",
+	"HU":    "Hungarian",
+	"ID":    "Indonesian",
+	"IT":    "Italian",
+	"JA":    "Japanese",
+	"KR":    "Korean",
+	"LA":    "Latvian",
+	"LT":    "Lithuanian",
+	"MK":    "Macedonian",
+	"NL":    "Dutch",
+	"NO":    "Norwegian",
+	"PL":    "Polish",
+	"PT":    "Portuguese",
+	"PT_BR": "Português Brasil",
+	"RO":    "Romanian",
+	"RU":    "Russian",
+	"SE":    "Swedish",
+	"SK":    "Slovak",
+	"SL":    "Slovenian",
+	"SP":    "Spanish",
+	"SR":    "Serbian",
+	"SV":    "Swedish",
+	"TH":    "Thai",
+	"TR":    "Turkish",
+	"UA":    "Ukrainian",
+	"UK":    "Ukrainian",
+	"VI":    "Vietnamese",
 	"ZH_CN": "Chinese Simplified",
+	"ZH_TW": "Chinese Traditional",
+	"ZU":    "Zulu",
+}
+
+// Exclude holds all supported excludes option to be used
+const (
+	ExcludeCurrent  = "current"
+	ExcludeMinutely = "minutely"
+	ExcludeHourly   = "hourly"
+	ExcludeDaily    = "daily"
+	ExcludeAlerts   = "alerts"
+)
+
+var Excludes []string = []string{
+	ExcludeCurrent,
+	ExcludeMinutely,
+	ExcludeHourly,
+	ExcludeDaily,
+	ExcludeAlerts,
 }
 
 // Config will hold default settings to be passed into the
@@ -177,10 +227,33 @@ func ValidDataUnitSymbol(u string) bool {
 	return false
 }
 
+// ValidExcludes makes sure the string passed in is an
+// acceptable excludes options.
+func ValidExcludes(e []string) (string, error) {
+	list := make([]string, 0)
+	for _, v := range e {
+		vl := strings.ToLower(v)
+		notFound := true
+
+		for _, d := range Excludes {
+			if d == vl {
+				list = append(list, v)
+				notFound = false
+				break
+			}
+		}
+
+		if notFound {
+			return "", errExcludesUnavailable
+		}
+	}
+	return strings.Join(list, ","), nil
+}
+
 // ValidAPIKey makes sure that the key given is a valid one
 func ValidAPIKey(key string) error {
-	if len(key) != 32 {
-		return errors.New("invalid key")
+	if len(key) > 64 {
+		return errInvalidKey
 	}
 	return nil
 }
