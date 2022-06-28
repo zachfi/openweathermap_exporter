@@ -23,28 +23,6 @@ compile-clean:
 
 compile: deps compile-only
 
-proto: proto-grpc gofmt-fix
-
-proto-grpc:
-	@echo "=== $(PROJECT_NAME) === [ proto compile    ]: compiling protobufs:"
-	@protoc -I ./ \
-		--go_out=./ --go_opt=paths=source_relative \
-		--go-grpc_out=./ --go-grpc_opt=paths=source_relative \
-		rpc/rpc.proto \
-		pkg/iot/iot.proto \
-		internal/astro/astro.proto \
-		internal/agent/agent.proto \
-		modules/lights/lights.proto \
-		modules/timer/named/named.proto \
-		modules/inventory/inventory.proto \
-		modules/telemetry/telemetry.proto
-	@protoc -I modules/inventory/ -I ./ \
-		--gotemplate_out=template_dir=modules/inventory/templates,debug=false,single-package-mode=true,all=true:modules/inventory \
-		modules/inventory/inventory.proto
-	@protoc -I modules/inventory/ -I ./ \
-		--gotemplate_out=template_dir=cmd/inventory/templates,debug=false,single-package-mode=true,all=true:cmd/inventory \
-		modules/inventory/inventory.proto
-
 compile-all: deps-only
 	@echo "=== $(PROJECT_NAME) === [ compile          ]: building commands:"
 	@mkdir -p $(BUILD_DIR)/$(GOOS)
@@ -59,11 +37,10 @@ compile-all: deps-only
 compile-only: deps-only
 	@echo "=== $(PROJECT_NAME) === [ compile          ]: building commands:"
 	@mkdir -p $(BUILD_DIR)/$(GOOS)
-	# CGO_ENABLED=0 GOOS=$(GOOS) $(GO) build -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(GOOS)/$(PROJECT_NAME) . ; 
 	@for b in $(BINS); do \
 		echo "=== $(PROJECT_NAME) === [ compile          ]:     $(BUILD_DIR)$(GOOS)/$$b"; \
 		BUILD_FILES=`find $(SRCDIR)/cmd/$$b -type f -name "*.go"` ; \
-		GOOS=$(GOOS) $(GO) build -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(GOOS)/$$b $$BUILD_FILES ; \
+		CGO_ENABLED=0 GOOS=$(GOOS) $(GO) build -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(GOOS)/$$b $$BUILD_FILES ; \
 	done
 
 # Override GOOS for these specific targets
