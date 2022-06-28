@@ -23,5 +23,4 @@ docker-snapshot: docker
 	docker tag xaque208/openweathermap_exporter:latest xaque208/openweathermap_exporter:${PROJECT_VER}
 	docker push xaque208/openweathermap_exporter:${PROJECT_VER}
 
-
 .PHONY: docker-login

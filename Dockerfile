@@ -1,8 +1,5 @@
-FROM alpine:3.15 as certs
-COPY ./openweathermap_exporter /bin/openweathermap_exporter
+FROM alpine:3.16
+COPY ./bin/linux/openweathermap_exporter /bin/openweathermap_exporter
 RUN chmod 0700 /bin/openweathermap_exporter
-RUN mkdir /var/openweathermap_exporter
-RUN apk --update add ca-certificates
-RUN apk add libc6-compat
-RUN apk add tzdata
+RUN apk --update add ca-certificates tzdata
 ENTRYPOINT ["/bin/openweathermap_exporter"]

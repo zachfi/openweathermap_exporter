@@ -2,7 +2,7 @@ style: github
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://github.com/xaque208/znet
+  repository_url: https://github.com/xaque208/openweathermap_exporter
 options:
   commits:
     filters:
@@ -25,7 +25,7 @@ options:
 
   issues:
     prefix:
-      - #
+      - "#"
 
   header:
     pattern: "^(\\w*)(?:\\(([\\/\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"
