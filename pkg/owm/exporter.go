@@ -196,6 +196,7 @@ func (o *OWM) collectOne(ctx context.Context, ch chan<- prometheus.Metric, locat
 			value,
 			location.Name,
 			epoch,
+			strconv.Itoa(w.Current.Dt),
 		)
 	}
 
@@ -333,12 +334,7 @@ func (o *OWM) collectOne(ctx context.Context, ch chan<- prometheus.Metric, locat
 				strconv.Itoa(day.Dt),
 			)
 		}
-
-		for _, weather := range day.Weather {
-			o.weatherSummary(ctx, ch, location, day.Dt, weather)
-		}
 	}
-
 }
 
 func (o *OWM) weatherSummary(ctx context.Context, ch chan<- prometheus.Metric, location Location, dt int, summary owm.Weather) {
