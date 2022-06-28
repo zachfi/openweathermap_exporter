@@ -83,7 +83,7 @@ github.com/prometheus/procfs/internal/util
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/xaque208/znet v0.31.4
+# github.com/xaque208/znet v0.31.5
 ## explicit; go 1.13
 github.com/xaque208/znet/pkg/util
 # go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.32.0
