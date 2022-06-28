@@ -3,7 +3,7 @@ module github.com/xaque208/openweathermap_exporter
 go 1.17
 
 require (
-	github.com/briandowns/openweathermap v0.16.0
+	github.com/briandowns/openweathermap v0.18.0
 	github.com/go-kit/log v0.2.1
 	github.com/grafana/dskit v0.0.0-20220624123803-3624a963826e
 	github.com/pkg/errors v0.9.1
@@ -46,5 +46,3 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-
-replace github.com/briandowns/openweathermap => /home/zach/go/src/github.com/xaque208/openweathermap
