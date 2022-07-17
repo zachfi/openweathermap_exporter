@@ -42,7 +42,7 @@ github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
-# github.com/grafana/dskit v0.0.0-20220624123803-3624a963826e
+# github.com/grafana/dskit v0.0.0-20220714053852-ead3f9308bb7
 ## explicit; go 1.17
 github.com/grafana/dskit/flagext
 # github.com/grpc-ecosystem/grpc-gateway v1.16.0
