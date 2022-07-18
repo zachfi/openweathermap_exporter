@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/briandowns/openweathermap v0.18.0
 	github.com/go-kit/log v0.2.1
-	github.com/grafana/dskit v0.0.0-20220624123803-3624a963826e
+	github.com/grafana/dskit v0.0.0-20220714053852-ead3f9308bb7
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/common v0.37.0
