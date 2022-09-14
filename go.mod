@@ -1,6 +1,6 @@
 module github.com/xaque208/openweathermap_exporter
 
-go 1.17
+go 1.19
 
 require (
 	github.com/briandowns/openweathermap v0.18.0
