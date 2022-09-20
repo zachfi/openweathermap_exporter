@@ -342,6 +342,8 @@ github.com/grafana/dskit v0.0.0-20220714053852-ead3f9308bb7 h1:4h6LefPRcHNniuO7s
 github.com/grafana/dskit v0.0.0-20220714053852-ead3f9308bb7/go.mod h1:D5GdDQDsPN12+eGhq+lSCY4o/glBYO6NC8CRkzb23gs=
 github.com/grafana/dskit v0.0.0-20220914132351-2835b538fb18 h1:HluBjtBoM5jJWLuMPIBiAwgCwydpbynw0Y4MncTG+bE=
 github.com/grafana/dskit v0.0.0-20220914132351-2835b538fb18/go.mod h1:/5aJR4AjaYbxhowVIdjeDDEem0EYSJh26HLD1U4Mc44=
+github.com/grafana/dskit v0.0.0-20220920070831-95c1e73ed605 h1:tNpzrJmTjH3jKPADB+mZIUsb/dsV1VVysDg8Xgx98iY=
+github.com/grafana/dskit v0.0.0-20220920070831-95c1e73ed605/go.mod h1:/5aJR4AjaYbxhowVIdjeDDEem0EYSJh26HLD1U4Mc44=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.1.0/go.mod h1:f5nM7jw/oeRSadq3xCzHAvxcr8HZnzsqU6ILg/0NiiE=
 github.com/grpc-ecosystem/go-grpc-middleware v1.2.2/go.mod h1:EaizFBKfUKtMIF5iaDEhniwNedqGo9FuLFzppDr3uwI=
