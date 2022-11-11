@@ -162,7 +162,13 @@ func installOpenTelemetryTracer(config *owm.Config, logger log.Logger) (func(), 
 		return nil, errors.Wrap(err, "failed to dial otel grpc")
 	}
 
-	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
+	options := []otlptracegrpc.Option{otlptracegrpc.WithGRPCConn(conn)}
+	if config.OrgID != "" {
+		options = append(options,
+			otlptracegrpc.WithHeaders(map[string]string{"X-Scope-OrgID": config.OrgID}))
+	}
+
+	traceExporter, err := otlptracegrpc.New(ctx, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to creat trace exporter")
 	}
