@@ -38,14 +38,14 @@ var (
 	metricWeatherEpochDesc = prometheus.NewDesc(
 		"weather_epoch",
 		"Weather event: (sunrise|sunset|moonrise|moonset)",
-		[]string{"location", "event", "dt"},
+		[]string{"location", "event"},
 		nil,
 	)
 
 	metricWeatherSummaryDesc = prometheus.NewDesc(
 		"weather_summary",
 		"Weather description",
-		[]string{"location", "main", "description", "dt"},
+		[]string{"location", "main", "description"},
 		nil,
 	)
 )
@@ -196,7 +196,6 @@ func (o *OWM) collectOne(ctx context.Context, ch chan<- prometheus.Metric, locat
 			value,
 			location.Name,
 			epoch,
-			strconv.Itoa(w.Current.Dt),
 		)
 	}
 
@@ -233,7 +232,9 @@ func (o *OWM) collectOne(ctx context.Context, ch chan<- prometheus.Metric, locat
 	}
 
 	for _, weather := range w.Current.Weather {
-		o.weatherSummary(ctx, ch, location, w.Current.Dt, weather)
+		if w.Current.Dt > 0 {
+			o.weatherSummary(ctx, ch, location, weather)
+		}
 	}
 
 	// Minutely forecast
@@ -282,7 +283,9 @@ func (o *OWM) collectOne(ctx context.Context, ch chan<- prometheus.Metric, locat
 		}
 
 		for _, weather := range hour.Weather {
-			o.weatherSummary(ctx, ch, location, hour.Dt, weather)
+			if hour.Dt > 0 {
+				o.weatherSummary(ctx, ch, location, weather)
+			}
 		}
 
 	}
@@ -339,7 +342,7 @@ func (o *OWM) collectOne(ctx context.Context, ch chan<- prometheus.Metric, locat
 	}
 }
 
-func (o *OWM) weatherSummary(ctx context.Context, ch chan<- prometheus.Metric, location Location, dt int, summary owm.Weather) {
+func (o *OWM) weatherSummary(ctx context.Context, ch chan<- prometheus.Metric, location Location, summary owm.Weather) {
 	ch <- prometheus.MustNewConstMetric(
 		metricWeatherSummaryDesc,
 		prometheus.CounterValue,
@@ -347,6 +350,5 @@ func (o *OWM) weatherSummary(ctx context.Context, ch chan<- prometheus.Metric, l
 		location.Name,
 		summary.Main,
 		summary.Description,
-		strconv.Itoa(dt),
 	)
 }
