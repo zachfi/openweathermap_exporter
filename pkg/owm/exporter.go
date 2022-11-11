@@ -24,7 +24,7 @@ var (
 	metricWeatherCurrentConditionsDesc = prometheus.NewDesc(
 		"weather_current",
 		"Weather condition current",
-		[]string{"location", "condition", "dt"},
+		[]string{"location", "condition"},
 		nil,
 	)
 
@@ -220,14 +220,16 @@ func (o *OWM) collectOne(ctx context.Context, ch chan<- prometheus.Metric, locat
 	}
 
 	for condition, value := range conditions {
-		ch <- prometheus.MustNewConstMetric(
-			metricWeatherCurrentConditionsDesc,
-			prometheus.GaugeValue,
-			value,
-			location.Name,
-			condition,
-			strconv.Itoa(w.Current.Dt),
-		)
+
+		if w.Current.Dt > 0 {
+			ch <- prometheus.MustNewConstMetric(
+				metricWeatherCurrentConditionsDesc,
+				prometheus.GaugeValue,
+				value,
+				location.Name,
+				condition,
+			)
+		}
 	}
 
 	for _, weather := range w.Current.Weather {
