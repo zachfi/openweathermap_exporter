@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	OtelEndpoint string `yaml:"otel_endpoint"`
+	OrgID        string `yaml:"org_id"`
 	ListenAddr   string `yaml:"listen_addr"`
 
 	APIKey    string     `mapstructure:"apikey"`
@@ -53,5 +54,6 @@ func loadYamlFile(filename string, d interface{}) error {
 
 func (c *Config) RegisterFlagsAndApplyDefaults(prefix string, f *flag.FlagSet) {
 	f.StringVar(&c.OtelEndpoint, "otel.endpoint", "", "otel endpoint, eg: tempo:4317")
+	f.StringVar(&c.OrgID, "org.id", "", "org ID to use when sending traces")
 	f.StringVar(&c.ListenAddr, "listen.addr", ":9101", "address to listen on")
 }
