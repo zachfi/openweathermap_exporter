@@ -31,9 +31,9 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/xaque208/znet/pkg/util"
+	"github.com/zachfi/znet/pkg/util"
 
-	"github.com/xaque208/openweathermap_exporter/pkg/owm"
+	"github.com/zachfi/openweathermap_exporter/pkg/owm"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"

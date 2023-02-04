@@ -1,4 +1,4 @@
-module github.com/xaque208/openweathermap_exporter
+module github.com/zachfi/openweathermap_exporter
 
 go 1.17
 
@@ -10,7 +10,7 @@ require (
 	github.com/prometheus/client_golang v1.13.1
 	github.com/prometheus/common v0.37.0
 	github.com/stretchr/testify v1.8.1
-	github.com/xaque208/znet v0.31.5
+	github.com/zachfi/znet v0.32.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.35.0
 	go.opentelemetry.io/otel v1.10.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.10.0
