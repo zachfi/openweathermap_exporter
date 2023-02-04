@@ -1,3 +1,8 @@
+<a name="v0.4.0"></a>
+## [v0.4.0] - 2023-02-04
+### Bug Fixes
+- **deps:** update github.com/grafana/dskit digest to 19b619d
+
 <a name="v0.3.0"></a>
 ## [v0.3.0] - 2022-11-22
 ### Bug Fixes
@@ -44,7 +49,8 @@
 ## [v0.0.2] - 2019-09-23
 <a name="v0.0.1"></a>
 ## v0.0.1 - 2019-09-23
-[Unreleased]: https://github.com/xaque208/openweathermap_exporter/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/xaque208/openweathermap_exporter/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/xaque208/openweathermap_exporter/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/xaque208/openweathermap_exporter/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/xaque208/openweathermap_exporter/compare/v0.1.2...v0.2.0
 [v0.1.2]: https://github.com/xaque208/openweathermap_exporter/compare/v0.1.1...v0.1.2
