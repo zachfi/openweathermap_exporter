@@ -17,10 +17,10 @@ docker-login:
 	@echo ${DOCKER_PASSWORD} | $(DOCKER) login -u ${DOCKER_USERNAME} --password-stdin
 
 docker:
-	docker build -t xaque208/openweathermap_exporter .
+	docker build -t zachfi/openweathermap_exporter .
 
 docker-snapshot: docker
-	docker tag xaque208/openweathermap_exporter:latest xaque208/openweathermap_exporter:${PROJECT_VER}
-	docker push xaque208/openweathermap_exporter:${PROJECT_VER}
+	docker tag zachfi/openweathermap_exporter:latest zachfi/openweathermap_exporter:${PROJECT_VER}
+	docker push zachfi/openweathermap_exporter:${PROJECT_VER}
 
 .PHONY: docker-login
